@@ -1,42 +1,63 @@
-# 📦 SIGNAL FACTORY v2.0 (Shipper Logic Puzzle)
+# 📦 SIGNAL FACTORY v2.0 (3D Cyberpunk Shipper Logic Puzzle)
 
-> **"Puzzle Logic × Shipping Simulation × Branching Narrative × 3D WebGL Diorama"**
-> Lấy cảm hứng từ *Human Resource Machine (Tomorrow Corporation)*, nâng cấp toàn diện với nhân vật Shipper BOX 3D, hỗ trợ đa nền tảng Mobile + PC, tích hợp chuẩn CrazyGames SDK v3 (Monetization & Ads Ready), đa ngôn ngữ Anh - Việt, và đồ họa 3D Isometric sống động.
+> **"Puzzle Logic × Logistics Simulation × Branching Narrative × 3D Cyberpunk Diorama × Android Ready"**
+> Lấy cảm hứng từ *Human Resource Machine (Tomorrow Corporation)*, nâng cấp toàn diện với nhân vật Robot Shipper BOX 3D, hỗ trợ đa nền tảng Web + Mobile Android (APK & AAB), tích hợp chuẩn CrazyGames SDK v3 (Monetization & Ads Ready), đa ngôn ngữ Anh - Việt, và đồ họa 3D Isometric Cyberpunk sống động.
 
 ---
 
-## 🌟 TÍNH NĂNG MỚI NÂNG CẤP (CRAZYGAMES & 3D EDITION)
+## 📱 TẢI VÀ CÀI ĐẶT APP ANDROID (APK & AAB)
 
-1. **🌐 Đa Ngôn Ngữ Chuẩn Quốc Tế (English Default):**
-   - Mặc định khởi động bằng **Tiếng Anh (EN)** để đạt chuẩn kiểm duyệt CrazyGames 100%.
-   - Hỗ trợ nút chuyển nhanh sang **Tiếng Việt (VI)** trên thanh công cụ (`🌐 English` / `🌐 Tiếng Việt`).
-   - Dịch toàn bộ giao diện, tên trạm xử lý, mô tả, nhiệm vụ thử thách, hội thoại Quản Đốc, gợi ý và kết thúc truyện.
+Game đã được đóng gói hoàn chỉnh thành ứng dụng Android native, chạy offline 100% không cần internet hay máy chủ:
 
-2. **🧊 Đồ Họa 3D Diorama Isometric (Three.js):**
-   - Nút chuyển đổi nhanh **`🧊 3D Diorama` ↔ `🗺️ 2D Blueprint`** trên thanh công cụ.
-   - Sàn nhà kho công nghiệp kim loại viền an toàn phản quang, đường ray dạng ống đôi mạ kim loại phát sáng neon.
-   - Trạm máy móc 3D với bánh răng xoay nhịp nhàng, hiệu ứng co giãn năng lượng khi xử lý hàng.
-   - Nhân vật Shipper BOX 3D ngộ nghĩnh đội mũ Signal Corp, ba lô cam, vác thùng hàng di chuyển trên ray.
-   - Tương tác 3D: Xoay tự do (Chuột trái / Touch drag), Thu phóng camera (Mouse wheel / Pinch), Di chuyển góc nhìn (Chuột phải / Two-finger drag).
+| Định dạng file | Tên file | Dung lượng | Mục đích sử dụng |
+|---|---|---|---|
+| **Android APK** | [`dist_android/SignalFactory-release.apk`](./dist_android/SignalFactory-release.apk) | ~265 KB | Cài đặt trực tiếp lên mọi điện thoại / tablet Android |
+| **Android APK (Debug)** | [`dist_android/SignalFactory-debug.apk`](./dist_android/SignalFactory-debug.apk) | ~313 KB | Dành cho thử nghiệm và test tính năng |
+| **Android App Bundle** | [`dist_android/SignalFactory-release.aab`](./dist_android/SignalFactory-release.aab) | ~269 KB | Dành cho xuất bản chính thức lên **Google Play Store** |
 
-3. **🎮 Tích Hợp CrazyGames SDK v3:**
-   - Thư viện chính thức `crazygames-sdk-v3.js` kèm lớp bọc `CrazyGamesSDK.js` an toàn tuyệt đối khi chạy offline/sandbox.
-   - Gọi `gameplayStart()` khi bắt đầu màn hoặc bấm `▶ GO`.
-   - Gọi `gameplayStop()` khi tạm dừng, hoàn thành màn hoặc thất bại.
-   - Gọi `happytime()` kích hoạt hiệu ứng chúc mừng khi chiến thắng.
-   - Tự động gọi **Midroll Ad** khi chuyển màn chơi.
-   - Xem **Rewarded Ad** khi người chơi cần mở khóa gợi ý sâu (Hint 2 & 3).
+### Cách cài đặt APK trên điện thoại:
+1. Copy file `SignalFactory-release.apk` vào điện thoại (hoặc tải qua link GitHub / Zalo / Drive).
+2. Chạm vào file `.apk` để cài đặt.
+3. Cho phép "Cài đặt ứng dụng từ nguồn không xác định" nếu Android hỏi.
+4. Mở game và trải nghiệm đồ họa 3D toàn màn hình cực mượt!
 
-4. **🔇 Tự Động Ngắt Âm Thanh Khi Rời Tab (`visibilitychange`):**
-   - Lắng nghe sự kiện `visibilitychange`, `window.blur`, `window.focus`.
-   - Khi người chơi chuyển tab hoặc thu nhỏ trình duyệt: tự động suspend `AudioContext` và ngắt nhạc nền BGM để không làm phiền người dùng.
-   - Khi quay lại tab: tự động resume mượt mà.
+---
+
+## 🌟 CÁC TÍNH NĂNG NỔI BẬT
+
+### 1. 🧊 Đồ Họa 3D Diorama Isometric Cyberpunk & Hero Robot:
+- **Tỉ lệ khung hình chuẩn diorama:** Tối ưu khoảng cách camera và FOV, hiển thị trọn vẹn sa bàn công xưởng vừa vặn trên mọi kích thước màn hình mà không bị phóng to quá cỡ.
+- **Robot Shipper BOX có animation sống động:**
+  - **Trạng thái IDLE:** Thở nhịp nhàng, lắc đầu quan sát, xoay ăng-ten, đèn beacon nhấp nháy, tay cầm máy quét hologram.
+  - **Trạng thái RUN:** Bước chân sải nhịp nhàng, gối gập, người nhún nhẩy, hai tay ôm kiện hàng di chuyển dọc theo đường ray phát sáng neon.
+- **Cảnh quan nhà kho Cyberpunk chi tiết:**
+  - Các container hàng hóa xếp tầng in stencil thương hiệu `SIGNAL CORP` & `SECTOR-07`.
+  - Cụm tháp tủ máy chủ (Data Server Racks) với hệ thống đèn LED nhấp nháy tuần tự.
+  - Cần cẩu trục gantry trên cao với tời nâng hàng kim loại.
+  - Tháp quạt thông gió làm mát với cánh quạt xoay cơ học liên tục.
+  - Xe vận chuyển tự hành (Patrol AGV) tuần tra viền ngoài sa bàn.
+  - Biển hiệu hologram neon cyberpunk `SIGNAL CORP - FOUNDRY SECTOR 7`.
+
+### 2. 🌐 Đa Ngôn Ngữ Chuẩn Quốc Tế (English Default):
+- Mặc định khởi động bằng **Tiếng Anh (EN)** để đạt chuẩn kiểm duyệt CrazyGames 100%.
+- Hỗ trợ nút chuyển nhanh sang **Tiếng Việt (VI)** trên thanh công cụ (`🌐 English` / `🌐 Tiếng Việt`).
+- Dịch toàn bộ giao diện, tên trạm xử lý, mô tả, nhiệm vụ thử thách, hội thoại Quản Đốc, gợi ý và kết thúc truyện.
+
+### 3. 🎮 Tích Hợp CrazyGames SDK v3:
+- Thư viện chính thức `crazygames-sdk-v3.js` kèm lớp bọc `CrazyGamesSDK.js` an toàn tuyệt đối khi chạy offline/sandbox.
+- Gọi `gameplayStart()` khi bắt đầu màn hoặc bấm `▶ GO`.
+- Gọi `gameplayStop()` khi tạm dừng, hoàn thành màn hoặc thất bại.
+- Gọi `happytime()` kích hoạt hiệu ứng chúc mừng khi chiến thắng.
+- Tự động gọi **Midroll Ad** khi chuyển màn chơi.
+- Xem **Rewarded Ad** khi người chơi cần mở khóa gợi ý sâu (Hint 2 & 3).
+
+### 4. 🔇 Tự Động Ngắt Âm Thanh Khi Rời Tab (`visibilitychange`):
+- Khi người chơi chuyển tab hoặc thu nhỏ trình duyệt: tự động suspend `AudioContext` và ngắt nhạc nền BGM để không làm phiền người dùng.
+- Khi quay lại tab: tự động resume mượt mà.
 
 ---
 
 ## 🎮 CÁCH CHƠI & MỞ GAME
-
-Game chạy hoàn toàn bằng **HTML5 Canvas + Vanilla JavaScript**, không phụ thuộc thư viện ngoài, tối ưu tải trang cực nhanh.
 
 ### Cách 1: Chơi trực tiếp trên trình duyệt
 Chỉ cần nhấp đúp vào file [`index.html`](./index.html) để mở trên trình duyệt (Chrome, Edge, Safari, Firefox).
@@ -47,10 +68,14 @@ python -m http.server 8000
 ```
 Truy cập: `http://localhost:8000`
 
-### ⚡ Chạy Stress Test (Kiểm thử tải cao & độ ổn định)
+### ⚡ Chạy Stress Test & Kiểm Tra Cú Pháp
 ```bash
+python verify_syntax.py
 python stresstest.py
 ```
+
+### 📊 Xem Báo Cáo Giải Thuật Toàn Diện 41 Màn Chơi
+Mở file [`solution_report.html`](./solution_report.html) trên trình duyệt để xem toàn bộ 41 sơ đồ mạch điện logic SVG cùng lời giải chi tiết.
 
 ---
 
@@ -61,11 +86,14 @@ python stresstest.py
 - **Kéo thả trạm:** Chạm và giữ trạm từ khay dưới kéo lên bản đồ, hoặc chạm 1 lần vào trạm trên khay để tự thêm vào giữa màn hình.
 - **Long-press (Chạm giữ 0.5s):** Mở menu xóa trạm hoặc chỉnh sửa giá trị `KHO CỐ ĐỊNH [N]`.
 - **Mèo Glitch:** Chạm vào chú mèo tím nhấp nháy để nhận gợi ý hoặc tích lũy **Glitch Token**.
+- **Điều khiển 3D:** Dùng 1 ngón tay vuốt để xoay góc nhìn, 2 ngón tay chụm để phóng to / thu nhỏ.
 
 ### 💻 Trên Máy Tính (PC Mouse & Keyboard):
 - **Click-drag nối ray:** Bấm chuột trái vào chân phát kéo sang chân nhận.
+- **Xoay camera 3D:** Giữ chuột trái kéo tự do để xoay quanh trung tâm sa bàn.
+- **Thu phóng 3D:** Cuộn con lăn chuột (Mouse wheel) để zoom gần/xa.
+- **Dời camera 3D:** Giữ chuột phải kéo để pan góc nhìn.
 - **Xóa:** Chuột phải vào đường ray hoặc trạm xử lý; hoặc click chọn trạm rồi nhấn `Delete` / `Backspace`.
-- **Cấu hình số:** Nhấp đúp (Double-click) vào trạm `Kho Cố Định` để nhập số N.
 - **Phím tắt:**
   - `Space`: Chạy / Tạm dừng mô phỏng (GO / Pause).
   - `H`: Mở bảng gợi ý 3 cấp.
@@ -111,9 +139,9 @@ Hệ thống theo dõi 2 chỉ số Reputation ẩn:
 
 ---
 
-## 🧪 KẾT QUẢ STRESS TEST
-Bộ kiểm thử tự động `stresstest.py` đã vượt qua 100% các bài kiểm tra:
-- **17/17 trạm xử lý** đúng chuẩn chân trị logic và số học.
-- **41/41 màn chơi** toàn vẹn dữ liệu, thử thách và hội thoại.
-- **Xử lý 50,000 phép tính logic** chỉ trong **0.005 giây** (~9.8 triệu phép tính/giây).
-- **Vòng phản hồi hồi tiếp (Feedback Accumulator)** chạy mượt mà 500 nhịp xung clock không rò rỉ bộ nhớ.
+## 🚀 DỰ ÁN ANDROID & TỰ ĐỘNG HÓA CI/CD
+
+- Thư mục Android source: [`android/`](./android)
+- Gradle wrapper tích hợp sẵn: `.\gradlew assembleRelease` hoặc `.\gradlew bundleRelease`
+- GitHub Actions workflow tự động: [`.github/workflows/android-build.yml`](./.github/workflows/android-build.yml)
+- Khi đẩy code lên GitHub, GitHub Actions sẽ tự động biên dịch và tạo artifact APK + AAB để mọi người tải về trực tiếp từ trang Releases/Actions.
