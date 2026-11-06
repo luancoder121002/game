@@ -95,7 +95,7 @@ window.SF = window.SF || {};
         ctx.fillText(label, 20, 50);
         ctx.fillStyle = '#f59e0b';
         ctx.font = '14px "Consolas", monospace';
-        ctx.fillText('HAZMAT 04 // FOUNDRY', 20, 80);
+        ctx.fillText('HAZMAT 04 - FOUNDRY', 20, 80);
 
         return new THREE.CanvasTexture(c);
     }
