@@ -30,7 +30,7 @@ window.SF = window.SF || {};
             this.platform = this.detectPlatform();
             this.orientation = this.detectOrientation();
 
-            const isMobilePortrait = (this.platform === 'mobile' && this.orientation === 'portrait') || window.innerWidth < 640;
+            const isMobilePortrait = this.orientation === 'portrait';
             document.body.classList.toggle('layout-mobile-portrait', isMobilePortrait);
             document.body.classList.toggle('layout-desktop', !isMobilePortrait);
         }

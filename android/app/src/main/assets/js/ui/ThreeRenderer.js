@@ -186,19 +186,25 @@ window.SF = window.SF || {};
             this.camera = new THREE.PerspectiveCamera(35, aspect, 10, 4500);
             this.updateCameraTransform();
 
-            // 3. WebGL Renderer
-            this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
-            this.renderer.setSize(w, h);
-            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            this.renderer.shadowMap.enabled = true;
-            this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            // 3. WebGL Renderer (Hỗ trợ an toàn cho mobile GPU)
+            try {
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+                this.renderer.setSize(w, h);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-            this.canvas = this.renderer.domElement;
-            this.canvas.id = 'boardCanvas3D';
-            this.canvas.style.display = 'none';
-            this.canvas.style.width = '100%';
-            this.canvas.style.height = '100%';
-            this.container.appendChild(this.canvas);
+                this.canvas = this.renderer.domElement;
+                this.canvas.id = 'boardCanvas3D';
+                this.canvas.style.display = 'none';
+                this.canvas.style.width = '100%';
+                this.canvas.style.height = '100%';
+                this.container.appendChild(this.canvas);
+            } catch (webglErr) {
+                console.error('[ThreeRenderer] Không thể khởi tạo WebGL:', webglErr);
+                this.renderer = null;
+                return;
+            }
 
             // Textures
             this.hazardTex = createHazardTexture();
@@ -232,8 +238,8 @@ window.SF = window.SF || {};
             const sun = new THREE.DirectionalLight(0xfffbeb, 2.4);
             sun.position.set(500, 750, 650);
             sun.castShadow = true;
-            sun.shadow.mapSize.width = 2048;
-            sun.shadow.mapSize.height = 2048;
+            sun.shadow.mapSize.width = 1024;
+            sun.shadow.mapSize.height = 1024;
             sun.shadow.camera.near = 100;
             sun.shadow.camera.far = 1800;
             const d = 750;
@@ -1396,11 +1402,54 @@ window.SF = window.SF || {};
 
         resize() {
             if (!this.renderer || !this.container) return;
-            const w = this.container.clientWidth;
+            const w = this.container.clientWidth || 900;
             const h = this.container.clientHeight || 560;
             this.camera.aspect = w / h;
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(w, h);
+        }
+
+        clearLevel3D() {
+            if (!this.scene) return;
+            // 1. Dọn dẹp station 3D
+            for (const [mesh, comp] of this.stationMeshes.entries()) {
+                this.scene.remove(mesh);
+                ThreeRenderer.disposeObject(mesh);
+            }
+            this.stationMeshes.clear();
+
+            // 2. Dọn dẹp rail 3D
+            for (const [mesh, wire] of this.railMeshes.entries()) {
+                this.scene.remove(mesh);
+                ThreeRenderer.disposeObject(mesh);
+            }
+            this.railMeshes.clear();
+
+            // 3. Dọn dẹp pin 3D
+            for (const [mesh, pin] of this.pinMeshes.entries()) {
+                this.scene.remove(mesh);
+                ThreeRenderer.disposeObject(mesh);
+            }
+            this.pinMeshes.clear();
+
+            for (const [pin, visualMesh] of this.pinVisuals.entries()) {
+                this.scene.remove(visualMesh);
+                ThreeRenderer.disposeObject(visualMesh);
+            }
+            this.pinVisuals.clear();
+
+            // 4. Dọn dẹp shippers & kiện hàng
+            for (const sm of this.shipperMeshes) {
+                this.scene.remove(sm);
+                ThreeRenderer.disposeObject(sm);
+            }
+            this.shipperMeshes = [];
+
+            // 5. Reset trạng thái tương tác kéo thả & nối dây
+            this.clearActive3DTube();
+            this.drawingFromPin = null;
+            this.snappedTargetPin = null;
+            this.draggedStation = null;
         }
 
         resetCamera() {

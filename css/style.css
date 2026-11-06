@@ -46,15 +46,19 @@ body {
     justify-content: space-between;
     background: linear-gradient(180deg, #0e2d1f 0%, #071911 100%);
     border-bottom: 2px solid var(--border-bright);
-    padding: 8px 16px;
-    height: 52px;
+    padding: 6px 12px;
+    height: 48px;
+    min-height: 48px;
     z-index: 10;
+    overflow-x: auto;
+    overflow-y: hidden;
 }
 
 .topbar-left, .topbar-center, .topbar-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .brand-badge {
@@ -80,11 +84,15 @@ body {
 }
 
 .level-title {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: bold;
     color: var(--neon-yellow);
     letter-spacing: 0.5px;
     text-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
 }
 
 .challenges-hud {
@@ -164,6 +172,10 @@ body {
     background: linear-gradient(180deg, #059669 0%, #047857 100%);
     border-color: #10b981;
     color: #fff;
+    order: -1;
+    font-size: 13px;
+    padding: 6px 16px;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
 }
 
 .btn-run:hover {
@@ -895,9 +907,126 @@ body {
 }
 
 /* ==========================================
-   MOBILE RESPONSIVE PORTRAIT STYLES
+   MOBILE RESPONSIVE: LANDSCAPE (PHONES & TABLETS)
    ========================================== */
-@media (max-width: 768px), (orientation: portrait) {
+@media (orientation: landscape) and (max-height: 600px) {
+    .topbar {
+        height: 42px;
+        min-height: 42px;
+        padding: 3px 8px;
+        gap: 6px;
+    }
+    .brand-badge, .act-badge {
+        display: none !important;
+    }
+    .level-title {
+        font-size: 11px;
+        max-width: 110px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .topbar-left, .topbar-center, .topbar-right {
+        gap: 5px;
+    }
+    .reputation-hud {
+        padding: 2px 6px;
+        font-size: 10px;
+    }
+    .challenge-item {
+        display: none !important;
+    }
+    .btn {
+        padding: 4px 8px;
+        font-size: 11px;
+        gap: 4px;
+    }
+    .btn-run {
+        padding: 5px 14px;
+        font-size: 12px;
+        order: -1;
+    }
+    .speed-control label {
+        display: none !important;
+    }
+    .speed-control select {
+        padding: 3px 4px;
+        font-size: 10px;
+    }
+    .game-viewport {
+        flex-direction: row !important;
+        flex: 1;
+        min-height: 0;
+    }
+    .queue-panel {
+        width: 105px !important;
+        min-width: 95px;
+        max-width: 115px;
+        padding: 4px;
+        border-bottom: none;
+    }
+    .queue-header {
+        font-size: 9px;
+        padding: 2px 0;
+        margin-bottom: 2px;
+    }
+    .port-label {
+        font-size: 9px;
+    }
+    .packet-badge {
+        padding: 2px 5px;
+        font-size: 9px;
+        margin: 2px 0;
+    }
+    .board-container {
+        flex: 1;
+        min-height: 0;
+        height: 100%;
+        position: relative;
+    }
+    .tray-wrapper {
+        min-height: 44px;
+        height: 44px;
+        padding: 2px 6px;
+    }
+    .tray-label {
+        font-size: 10px;
+        padding-right: 6px;
+    }
+    .tray-item {
+        min-width: 50px;
+        padding: 2px 6px;
+        font-size: 10px;
+    }
+    .tray-item .station-icon {
+        font-size: 14px;
+    }
+    .dialogue-bar {
+        height: 46px;
+        padding: 3px 8px;
+    }
+    .avatar-box {
+        width: 34px;
+        height: 34px;
+        font-size: 15px;
+    }
+    .dialogue-speaker {
+        font-size: 9px;
+    }
+    .dialogue-text {
+        font-size: 10px;
+        line-height: 1.2;
+    }
+    .btn-hint, .btn-glitch {
+        padding: 3px 8px;
+        font-size: 10px;
+    }
+}
+
+/* ==========================================
+   MOBILE RESPONSIVE: PORTRAIT
+   ========================================== */
+@media (orientation: portrait) {
     .topbar {
         height: auto;
         flex-wrap: wrap;
@@ -905,7 +1034,8 @@ body {
         gap: 6px;
     }
     .level-title {
-        font-size: 13px;
+        font-size: 12px;
+        max-width: 140px;
     }
     .game-viewport {
         flex-direction: column;
@@ -913,7 +1043,7 @@ body {
     .queue-panel {
         width: 100% !important;
         height: auto !important;
-        max-height: 70px;
+        max-height: 60px;
         flex-direction: row !important;
         overflow-x: auto;
         overflow-y: hidden;
@@ -935,23 +1065,23 @@ body {
         gap: 4px;
     }
     .packet-badge {
-        padding: 4px 6px;
+        padding: 3px 6px;
         font-size: 10px;
     }
     .board-container {
         flex: 1;
-        min-height: 300px;
+        min-height: 240px;
     }
     .tray-wrapper {
-        min-height: 64px;
-        padding: 4px 8px;
+        min-height: 52px;
+        padding: 3px 6px;
     }
     .tray-item {
-        min-width: 58px;
-        padding: 4px 8px;
+        min-width: 52px;
+        padding: 3px 6px;
     }
     .dialogue-bar {
-        height: 60px;
-        padding: 6px 10px;
+        height: 50px;
+        padding: 4px 8px;
     }
 }

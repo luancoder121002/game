@@ -32,7 +32,12 @@ window.SF = window.SF || {};
             // Khởi tạo ThreeRenderer cho chế độ 3D Isometric Diorama
             const boardContainer = document.querySelector('.board-container');
             if (typeof SF.ThreeRenderer === 'function' && boardContainer) {
-                this.threeRenderer = new SF.ThreeRenderer(boardContainer, this.circuit, this.simulator);
+                try {
+                    this.threeRenderer = new SF.ThreeRenderer(boardContainer, this.circuit, this.simulator);
+                } catch (e) {
+                    console.warn('[GameApp] Lỗi khởi tạo ThreeRenderer (fallback về 2D):', e);
+                    this.threeRenderer = null;
+                }
             }
 
             this.setupCanvasSize();
@@ -278,8 +283,16 @@ window.SF = window.SF || {};
             this.dialogueBox.setLevel(level);
 
             if (this.threeRenderer) {
-                this.threeRenderer.clearLevel3D();
-                this.threeRenderer.resetCamera();
+                try {
+                    if (typeof this.threeRenderer.clearLevel3D === 'function') {
+                        this.threeRenderer.clearLevel3D();
+                    }
+                    if (typeof this.threeRenderer.resetCamera === 'function') {
+                        this.threeRenderer.resetCamera();
+                    }
+                } catch (e) {
+                    console.warn('[GameApp] Lỗi clearLevel3D:', e);
+                }
             }
 
             if (SF.crazyGames) {
@@ -344,9 +357,19 @@ window.SF = window.SF || {};
             const dt = (this.lastTime === 0) ? 0.016 : Math.min(0.1, (currentTime - this.lastTime) / 1000);
             this.lastTime = currentTime;
 
-            if (this.is3D && this.threeRenderer) {
-                this.threeRenderer.render(dt);
-            } else {
+            try {
+                if (this.is3D && this.threeRenderer && this.threeRenderer.active) {
+                    this.threeRenderer.render(dt);
+                } else {
+                    this.renderer.render(dt);
+                }
+            } catch (err) {
+                console.error('[GameApp] Lỗi render loop:', err);
+                if (this.is3D) {
+                    this.is3D = false;
+                    this.canvas.style.display = 'block';
+                    if (this.threeRenderer) this.threeRenderer.setActive(false);
+                }
                 this.renderer.render(dt);
             }
 
