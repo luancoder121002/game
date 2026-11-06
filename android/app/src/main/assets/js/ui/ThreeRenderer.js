@@ -100,6 +100,73 @@ window.SF = window.SF || {};
         return new THREE.CanvasTexture(c);
     }
 
+    // Helper: Bảng tên trạm 3D Hologram phát sáng lơ lửng trên không
+    function createStationLabelSprite(title, sub = '', color = '#10b981') {
+        const c = document.createElement('canvas');
+        c.width = 256;
+        c.height = 96;
+        const ctx = c.getContext('2d');
+
+        ctx.fillStyle = 'rgba(6, 26, 17, 0.92)';
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(6, 6, 244, 84, 12);
+        else ctx.rect(6, 6, 244, 84);
+        ctx.fill();
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px "Consolas", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(title, 128, sub ? 34 : 48);
+
+        if (sub) {
+            ctx.fillStyle = color;
+            ctx.font = 'bold 18px "Consolas", monospace';
+            ctx.fillText(sub, 128, 66);
+        }
+
+        const tex = new THREE.CanvasTexture(c);
+        tex.minFilter = THREE.LinearFilter;
+        const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+        const sprite = new THREE.Sprite(mat);
+        sprite.scale.set(70, 26, 1);
+        return sprite;
+    }
+
+    // Helper: Nhãn hiển thị số trên thùng hàng khi robot vận chuyển
+    function createBoxValueBadge(val) {
+        const c = document.createElement('canvas');
+        c.width = 128;
+        c.height = 64;
+        const ctx = c.getContext('2d');
+
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(4, 4, 120, 56, 10);
+        else ctx.rect(4, 4, 120, 56);
+        ctx.fill();
+
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = 'bold 28px "Consolas", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`[${val}]`, 64, 32);
+
+        const tex = new THREE.CanvasTexture(c);
+        const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+        const sprite = new THREE.Sprite(mat);
+        sprite.scale.set(26, 13, 1);
+        return sprite;
+    }
+
     class ThreeRenderer {
         static disposeObject(obj) {
             if (!obj) return;
@@ -128,16 +195,17 @@ window.SF = window.SF || {};
             this.camera = null;
             this.renderer = null;
 
-            // Góc nhìn Isometric chuẩn xác, khoảng cách cân đối 1180px bao quát toàn cảnh nhà máy
+            // Góc nhìn Isometric chuẩn xác, tự động tối ưu tỉ lệ gần cho màn hình di động
+            const isMobile = (window.innerWidth <= 900 || window.innerHeight <= 520);
             this.controls = {
                 rotating: false,
                 panning: false,
                 prevX: 0,
                 prevY: 0,
-                rotX: 0.64, // ~36 độ Isometric tự nhiên
-                rotY: 0.58, // ~33 độ Oblique
-                distance: 1180, // Tỉ lệ vừa vặn, không bị phóng quá to
-                target: new THREE.Vector3(460, 0, 270)
+                rotX: 0.62,
+                rotY: 0.54,
+                distance: isMobile ? 740 : 1080,
+                target: new THREE.Vector3(450, 0, 250)
             };
 
             this.raycaster = new THREE.Raycaster();
@@ -199,6 +267,7 @@ window.SF = window.SF || {};
                 this.canvas.style.display = 'none';
                 this.canvas.style.width = '100%';
                 this.canvas.style.height = '100%';
+                this.canvas.style.touchAction = 'none';
                 this.container.appendChild(this.canvas);
             } catch (webglErr) {
                 console.error('[ThreeRenderer] Không thể khởi tạo WebGL:', webglErr);
@@ -689,17 +758,29 @@ window.SF = window.SF || {};
         }
 
         // =========================================================================
-        // THAO TÁC 3D MƯỢT MÀ VỚI HITBOX LỚN R=28
+        // THAO TÁC 3D MƯỢT MÀ VỚI HITBOX LỚN R=28 (HỖ TRỢ ĐẦY ĐỦ CHUỘT & CẢM ỨNG MOBILE)
         // =========================================================================
         setup3DInteractions() {
             const dom = this.canvas;
 
+            // Variables for touch interactions
+            this.touchSelectedPin = null;
+            this.touchStartTime = 0;
+            this.touchStartPos = null;
+            this.touchMoved = false;
+            this.touchRotating = false;
+            this.lastTouchPos = null;
+            this.lastPinchDist = 0;
+            this.lastMidPoint = null;
+            let lastTapTime = 0;
+
+            // --- 1. MOUSE EVENTS (DESKTOP) ---
             dom.addEventListener('mousedown', (e) => {
                 const mouse = this.getNormalizedMouse(e);
                 this.raycaster.setFromCamera(mouse, this.camera);
 
                 if (e.button === 0) { // Chuột trái
-                    // 1. BẮT TRÚNG CHÂN CẮM PIN VỚI HITBOX R=28
+                    // Bắt trúng chân cắm PIN với Hitbox R=28
                     const hitboxes = Array.from(this.pinMeshes.keys());
                     const pinHits = this.raycaster.intersectObjects(hitboxes);
                     if (pinHits.length > 0) {
@@ -712,7 +793,7 @@ window.SF = window.SF || {};
                         }
                     }
 
-                    // 2. Bắt trúng trạm máy móc để di chuyển
+                    // Bắt trúng trạm máy móc để di chuyển
                     const stationMeshes = Array.from(this.stationMeshes.keys());
                     const stationHits = this.raycaster.intersectObjects(stationMeshes, true);
                     if (stationHits.length > 0) {
@@ -732,7 +813,7 @@ window.SF = window.SF || {};
                         }
                     }
 
-                    // 3. Xoay góc nhìn camera
+                    // Xoay góc nhìn camera
                     this.controls.rotating = true;
                     this.controls.prevX = e.clientX;
                     this.controls.prevY = e.clientY;
@@ -838,7 +919,7 @@ window.SF = window.SF || {};
 
             dom.addEventListener('wheel', (e) => {
                 e.preventDefault();
-                this.controls.distance = Math.max(400, Math.min(1800, this.controls.distance + e.deltaY * 0.8));
+                this.controls.distance = Math.max(350, Math.min(1800, this.controls.distance + e.deltaY * 0.8));
                 this.updateCameraTransform();
             }, { passive: false });
 
@@ -876,16 +957,260 @@ window.SF = window.SF || {};
                     }
                 }
             });
+
+            // --- 2. TOUCH EVENTS (SMARTPHONE / TABLET) ---
+            dom.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    const t = e.touches[0];
+                    const now = Date.now();
+                    this.touchStartTime = now;
+                    this.touchStartPos = { x: t.clientX, y: t.clientY };
+                    this.touchMoved = false;
+
+                    const touchVec = this.getNormalizedTouch(t);
+                    this.raycaster.setFromCamera(touchVec, this.camera);
+
+                    // A. Bắt trúng chân cắm Pin (Hitbox R=28)
+                    const hitboxes = Array.from(this.pinMeshes.keys());
+                    const pinHits = this.raycaster.intersectObjects(hitboxes);
+                    if (pinHits.length > 0) {
+                        const hitPin = this.pinMeshes.get(pinHits[0].object);
+                        if (hitPin) {
+                            if (this.touchSelectedPin) {
+                                // Đã chọn pin trước đó -> Tap pin thứ 2 để kết nối (2-tap connect)
+                                if (this.touchSelectedPin !== hitPin) {
+                                    const wire = this.circuit.addWire(this.touchSelectedPin, hitPin);
+                                    if (wire) SF.soundManager.playWireConnect();
+                                    else SF.soundManager.playFail();
+                                }
+                                this.touchSelectedPin = null;
+                                this.clearActive3DTube();
+                            } else {
+                                // Chọn pin đầu tiên hoặc bắt đầu kéo dây từ pin
+                                this.drawingFromPin = hitPin;
+                                this.touchSelectedPin = hitPin;
+                                SF.soundManager.playClick();
+                            }
+                            this.updatePinHoverStates();
+                            e.preventDefault();
+                            return;
+                        }
+                    }
+
+                    // Nếu chạm vào khoảng trống khi đang chọn pin -> Bỏ chọn
+                    if (this.touchSelectedPin) {
+                        this.touchSelectedPin = null;
+                        this.clearActive3DTube();
+                        this.updatePinHoverStates();
+                    }
+
+                    // B. Bắt trúng trạm máy móc để di chuyển bằng cảm ứng
+                    const stationMeshes = Array.from(this.stationMeshes.keys());
+                    const stationHits = this.raycaster.intersectObjects(stationMeshes, true);
+                    if (stationHits.length > 0) {
+                        const comp = this.findParentComponent(stationHits[0].object);
+                        if (comp && !comp.isPort) {
+                            // Kiểm tra Double-Tap trên mobile để đổi giá trị trạm hằng số
+                            if (now - lastTapTime < 320 && (comp.type === 'FIXED_SUPPLY' || comp.type === 'CONSTANT')) {
+                                const val = prompt('Nhập hằng số N:', comp.customValue);
+                                if (val !== null && val.trim() !== '') {
+                                    comp.setValue(val.trim());
+                                    SF.soundManager.playClick();
+                                }
+                                lastTapTime = 0;
+                                e.preventDefault();
+                                return;
+                            }
+                            lastTapTime = now;
+
+                            this.draggedStation = comp;
+                            comp.selected = true;
+
+                            const intersectPoint = new THREE.Vector3();
+                            if (this.raycaster.ray.intersectPlane(this.planeIntersect, intersectPoint)) {
+                                this.dragStartOffset.set(intersectPoint.x - comp.x, 0, intersectPoint.z - comp.y);
+                            }
+
+                            SF.soundManager.playClick();
+                            e.preventDefault();
+                            return;
+                        }
+                    }
+
+                    // C. 1 ngón tay vuốt sàn 3D -> Xoay góc nhìn camera
+                    this.touchRotating = true;
+                    this.lastTouchPos = { x: t.clientX, y: t.clientY };
+                    e.preventDefault();
+
+                } else if (e.touches.length === 2) {
+                    // Chế độ 2 ngón tay: Thu phóng (Pinch-to-zoom) & Di chuyển (Pan)
+                    this.touchRotating = false;
+                    this.draggedStation = null;
+                    if (this.drawingFromPin) {
+                        this.clearActive3DTube();
+                        this.drawingFromPin = null;
+                    }
+
+                    const t0 = e.touches[0];
+                    const t1 = e.touches[1];
+                    this.lastPinchDist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
+                    this.lastMidPoint = {
+                        x: (t0.clientX + t1.clientX) * 0.5,
+                        y: (t0.clientY + t1.clientY) * 0.5
+                    };
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            dom.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1) {
+                    const t = e.touches[0];
+                    if (this.touchStartPos) {
+                        const dist = Math.hypot(t.clientX - this.touchStartPos.x, t.clientY - this.touchStartPos.y);
+                        if (dist > 8) this.touchMoved = true;
+                    }
+
+                    const touchVec = this.getNormalizedTouch(t);
+                    this.raycaster.setFromCamera(touchVec, this.camera);
+
+                    if (this.draggedStation) {
+                        // Kéo trạm máy di chuyển theo mặt phẳng bàn cờ
+                        const intersectPoint = new THREE.Vector3();
+                        if (this.raycaster.ray.intersectPlane(this.planeIntersect, intersectPoint)) {
+                            const cell = this.circuit.cellSize || 50;
+                            const nx = Math.round((intersectPoint.x - this.dragStartOffset.x) / cell) * cell;
+                            const ny = Math.round((intersectPoint.z - this.dragStartOffset.z) / cell) * cell;
+
+                            this.draggedStation.x = Math.max(120, Math.min(780, nx));
+                            this.draggedStation.y = Math.max(40, Math.min(480, ny));
+                            this.draggedStation.updatePinPositions();
+                        }
+                        e.preventDefault();
+
+                    } else if (this.drawingFromPin) {
+                        // Kéo dây nối 3D trực quan
+                        const intersectPoint = new THREE.Vector3();
+                        if (this.raycaster.ray.intersectPlane(this.planeIntersect, intersectPoint)) {
+                            const snapPin = this.findNearbyCompatiblePin(intersectPoint, 48);
+                            this.snappedTargetPin = snapPin;
+                            const dest = snapPin ? new THREE.Vector3(snapPin.position.x, 26, snapPin.position.y) : intersectPoint;
+                            this.updateActive3DTube(this.drawingFromPin, dest);
+                        }
+                        this.updatePinHoverStates();
+                        e.preventDefault();
+
+                    } else if (this.touchRotating && this.lastTouchPos) {
+                        // Xoay góc nhìn Diorama bằng 1 ngón tay
+                        const dx = t.clientX - this.lastTouchPos.x;
+                        const dy = t.clientY - this.lastTouchPos.y;
+                        this.controls.rotY -= dx * 0.006;
+                        this.controls.rotX = Math.max(0.15, Math.min(1.4, this.controls.rotX + dy * 0.006));
+                        this.lastTouchPos = { x: t.clientX, y: t.clientY };
+                        this.updateCameraTransform();
+                        e.preventDefault();
+                    }
+
+                } else if (e.touches.length === 2) {
+                    // Xử lý 2 ngón tay: Pinch Zoom & Pan
+                    const t0 = e.touches[0];
+                    const t1 = e.touches[1];
+
+                    // 1. Thu phóng (Pinch-to-zoom)
+                    const curDist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
+                    if (this.lastPinchDist > 0) {
+                        const dDist = curDist - this.lastPinchDist;
+                        this.controls.distance = Math.max(350, Math.min(1800, this.controls.distance - dDist * 1.5));
+                    }
+                    this.lastPinchDist = curDist;
+
+                    // 2. Di chuyển tâm nhìn (Two-finger Pan)
+                    const curMidX = (t0.clientX + t1.clientX) * 0.5;
+                    const curMidY = (t0.clientY + t1.clientY) * 0.5;
+                    if (this.lastMidPoint) {
+                        const dMidX = curMidX - this.lastMidPoint.x;
+                        const dMidY = curMidY - this.lastMidPoint.y;
+                        this.controls.target.x -= dMidX * 0.8;
+                        this.controls.target.z -= dMidY * 0.8;
+                    }
+                    this.lastMidPoint = { x: curMidX, y: curMidY };
+
+                    this.updateCameraTransform();
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            dom.addEventListener('touchend', (e) => {
+                if (this.draggedStation) {
+                    SF.soundManager.playClick();
+                    this.draggedStation = null;
+                }
+
+                if (this.drawingFromPin) {
+                    if (this.touchMoved) {
+                        // Người dùng đã kéo ngón tay từ pin -> Thả ngón tay để nối dây
+                        let targetPin = this.snappedTargetPin;
+                        if (!targetPin && e.changedTouches && e.changedTouches.length > 0) {
+                            const touchVec = this.getNormalizedTouch(e.changedTouches[0]);
+                            this.raycaster.setFromCamera(touchVec, this.camera);
+                            const hitboxes = Array.from(this.pinMeshes.keys());
+                            const pinHits = this.raycaster.intersectObjects(hitboxes);
+                            if (pinHits.length > 0) {
+                                targetPin = this.pinMeshes.get(pinHits[0].object);
+                            }
+                        }
+
+                        if (targetPin && targetPin !== this.drawingFromPin) {
+                            const wire = this.circuit.addWire(this.drawingFromPin, targetPin);
+                            if (wire) SF.soundManager.playWireConnect();
+                            else SF.soundManager.playFail();
+                        }
+
+                        this.clearActive3DTube();
+                        this.drawingFromPin = null;
+                        this.snappedTargetPin = null;
+                        this.touchSelectedPin = null;
+                    } else {
+                        // Người dùng chỉ chạm nhẹ (tap) -> Giữ touchSelectedPin để chờ tap pin thứ 2
+                        this.drawingFromPin = null;
+                    }
+                }
+
+                if (e.touches.length === 0) {
+                    this.touchRotating = false;
+                    this.lastTouchPos = null;
+                    this.lastPinchDist = 0;
+                    this.lastMidPoint = null;
+                } else if (e.touches.length === 1) {
+                    const t = e.touches[0];
+                    this.lastTouchPos = { x: t.clientX, y: t.clientY };
+                    this.lastPinchDist = 0;
+                    this.lastMidPoint = null;
+                }
+                this.updatePinHoverStates();
+            });
+
+            dom.addEventListener('touchcancel', () => {
+                this.touchRotating = false;
+                this.draggedStation = null;
+                this.drawingFromPin = null;
+                this.snappedTargetPin = null;
+                this.touchSelectedPin = null;
+                this.clearActive3DTube();
+                this.updatePinHoverStates();
+            });
         }
 
         findNearbyCompatiblePin(worldPos, maxDistance = 45) {
             let bestPin = null;
             let minDist = maxDistance;
 
+            const activePin = this.drawingFromPin || this.touchSelectedPin;
+            if (!activePin) return null;
+
             for (const [hitbox, pin] of this.pinMeshes.entries()) {
-                if (pin === this.drawingFromPin) continue;
-                if (this.drawingFromPin.isInput() && !pin.isOutput()) continue;
-                if (this.drawingFromPin.isOutput() && !pin.isInput()) continue;
+                if (pin === activePin) continue;
+                if (activePin.isInput() && !pin.isOutput()) continue;
+                if (activePin.isOutput() && !pin.isInput()) continue;
 
                 const pinPos = new THREE.Vector3(pin.position.x, 26, pin.position.y);
                 const d = worldPos.distanceTo(pinPos);
@@ -904,9 +1229,9 @@ window.SF = window.SF || {};
             const hoveredPin = pinHits.length > 0 ? this.pinMeshes.get(pinHits[0].object) : null;
 
             for (const [pin, visualMesh] of this.pinVisuals.entries()) {
-                if (pin === hoveredPin || pin === this.snappedTargetPin) {
+                if (pin === hoveredPin || pin === this.snappedTargetPin || pin === this.touchSelectedPin) {
                     visualMesh.scale.set(1.4, 1.4, 1.4);
-                    visualMesh.material.emissiveIntensity = 2.0;
+                    visualMesh.material.emissiveIntensity = 2.4;
                 } else {
                     visualMesh.scale.set(1.0, 1.0, 1.0);
                     visualMesh.material.emissiveIntensity = 0.8;
@@ -919,6 +1244,14 @@ window.SF = window.SF || {};
             return new THREE.Vector2(
                 ((e.clientX - rect.left) / rect.width) * 2 - 1,
                 -((e.clientY - rect.top) / rect.height) * 2 + 1
+            );
+        }
+
+        getNormalizedTouch(touch) {
+            const rect = this.canvas.getBoundingClientRect();
+            return new THREE.Vector2(
+                ((touch.clientX - rect.left) / rect.width) * 2 - 1,
+                -((touch.clientY - rect.top) / rect.height) * 2 + 1
             );
         }
 
@@ -1143,6 +1476,15 @@ window.SF = window.SF || {};
                 group.userData.plasmaTube = tube;
             }
 
+            // Bảng tên Hologram 3D phát sáng lơ lửng trên không
+            const labelColor = comp.isPort ? (comp.type === 'INPUT_PORT' ? '#10b981' : '#f59e0b') : '#38bdf8';
+            const labelText = comp.name || comp.type;
+            const labelSub = comp.isPort ? comp.portName : '';
+            const labelSprite = createStationLabelSprite(labelText, labelSub, labelColor);
+            labelSprite.position.set(0, h / 2 + 28, 0);
+            group.add(labelSprite);
+            group.userData.labelSprite = labelSprite;
+
             return group;
         }
 
@@ -1284,7 +1626,13 @@ window.SF = window.SF || {};
             }
             this.shipperMeshes = [];
 
+            const simSpeed = (window.game && window.game.simulator) ? window.game.simulator.speed : 1.0;
+
             for (const rail of this.circuit.wires) {
+                if (typeof rail.updatePackets === 'function') {
+                    rail.updatePackets(dt * 0.72 * simSpeed);
+                }
+
                 for (const pkt of rail.packets) {
                     const t = Math.max(0, Math.min(1, pkt.progress));
                     const p1 = new THREE.Vector3(rail.fromPin.position.x, 26, rail.fromPin.position.y);
@@ -1385,6 +1733,13 @@ window.SF = window.SF || {};
                 const tape = new THREE.Mesh(tapeGeo, tapeMat);
                 tape.position.set(0, 28 + bobY, 0);
                 group.add(tape);
+
+                // Nhãn hiển thị số trên kiện hàng
+                if (box.value !== undefined) {
+                    const badge = createBoxValueBadge(box.value);
+                    badge.position.set(0, 36 + bobY, 0);
+                    group.add(badge);
+                }
             }
 
             return group;
@@ -1453,10 +1808,11 @@ window.SF = window.SF || {};
         }
 
         resetCamera() {
-            this.controls.rotX = 0.64;
-            this.controls.rotY = 0.58;
-            this.controls.distance = 1180;
-            this.controls.target.set(460, 0, 270);
+            const isMobile = (window.innerWidth <= 900 || window.innerHeight <= 520);
+            this.controls.rotX = 0.62;
+            this.controls.rotY = 0.54;
+            this.controls.distance = isMobile ? 740 : 1080;
+            this.controls.target.set(450, 0, 250);
             this.updateCameraTransform();
         }
     }

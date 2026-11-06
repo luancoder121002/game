@@ -14,6 +14,10 @@ window.SF = window.SF || {};
 
             this.selectedPin = null;
             this.longPressTimer = null;
+            this.draggedComp = null;
+            this.dragOffset = { x: 0, y: 0 };
+            this.touchStartPos = { x: 0, y: 0 };
+            this.isDraggingComp = false;
 
             this.setupTouch();
         }
@@ -32,8 +36,8 @@ window.SF = window.SF || {};
                 if (e.touches.length !== 1) return;
                 const pos = this.getTouchPos(e.touches[0]);
 
-                // 1. Kiểm tra chạm vào pin (Tap target 44px)
-                const pin = this.circuit.getPinAt(pos.x, pos.y, 22);
+                // 1. Kiểm tra chạm vào pin (Tap target mở rộng 28px)
+                const pin = this.circuit.getPinAt(pos.x, pos.y, 28);
                 if (pin) {
                     if (!this.selectedPin) {
                         // Chọn chân thứ nhất
@@ -77,35 +81,78 @@ window.SF = window.SF || {};
                     }
                 }
 
-                // 3. Long-press để xóa hoặc chỉnh sửa trạm
+                // 3. Chạm vào trạm để di chuyển (Touch Drag) hoặc Long-press để xóa/chỉnh sửa
                 const comp = this.circuit.getComponentAt(pos.x, pos.y);
                 if (comp) {
-                    this.longPressTimer = setTimeout(async () => {
-                        if (comp.type === 'FIXED_SUPPLY' || comp.type === 'CONSTANT') {
-                            const val = SF.dialog
-                                ? await SF.dialog.prompt('Nhập số N:', comp.customValue)
-                                : prompt('Nhập số N:', comp.customValue);
-                            if (val !== null) comp.setValue(val.trim());
-                        } else if (!comp.isPort) {
-                            const confirmed = SF.dialog
-                                ? await SF.dialog.confirm(`Xóa trạm ${comp.name}?`)
-                                : confirm(`Xóa trạm ${comp.name}?`);
-                            if (confirmed) {
-                                this.circuit.removeComponent(comp);
-                                SF.soundManager.playDelete();
+                    for (const c of this.circuit.components) {
+                        c.selected = (c === comp);
+                    }
+
+                    if (!comp.isPort) {
+                        this.draggedComp = comp;
+                        this.touchStartPos = { x: pos.x, y: pos.y };
+                        this.dragOffset = { x: pos.x - comp.x, y: pos.y - comp.y };
+                        this.isDraggingComp = false;
+
+                        this.longPressTimer = setTimeout(async () => {
+                            if (this.isDraggingComp) return;
+                            if (comp.type === 'FIXED_SUPPLY' || comp.type === 'CONSTANT') {
+                                const val = SF.dialog
+                                    ? await SF.dialog.prompt('Nhập số N:', comp.customValue)
+                                    : prompt('Nhập số N:', comp.customValue);
+                                if (val !== null && val.trim() !== '') comp.setValue(val.trim());
+                            } else {
+                                const confirmed = SF.dialog
+                                    ? await SF.dialog.confirm(`Xóa trạm ${comp.name}?`)
+                                    : confirm(`Xóa trạm ${comp.name}?`);
+                                if (confirmed) {
+                                    this.circuit.removeComponent(comp);
+                                    SF.soundManager.playDelete();
+                                }
                             }
-                        }
-                    }, 500);
+                            this.draggedComp = null;
+                        }, 500);
+                    }
+                    e.preventDefault();
+                } else {
+                    for (const c of this.circuit.components) c.selected = false;
                 }
             }, { passive: false });
 
             this.canvas.addEventListener('touchmove', (e) => {
-                if (this.longPressTimer) {
-                    clearTimeout(this.longPressTimer);
-                    this.longPressTimer = null;
+                if (e.touches.length !== 1) return;
+                const pos = this.getTouchPos(e.touches[0]);
+
+                // Xử lý di chuyển trạm trên màn hình cảm ứng
+                if (this.draggedComp) {
+                    const dist = Math.hypot(pos.x - this.touchStartPos.x, pos.y - this.touchStartPos.y);
+                    if (dist > 8) {
+                        this.isDraggingComp = true;
+                        if (this.longPressTimer) {
+                            clearTimeout(this.longPressTimer);
+                            this.longPressTimer = null;
+                        }
+                    }
+
+                    if (this.isDraggingComp) {
+                        const cell = this.circuit.cellSize || 50;
+                        let nx = pos.x - this.dragOffset.x;
+                        let ny = pos.y - this.dragOffset.y;
+
+                        // Giới hạn trong vùng làm việc của bảng
+                        nx = Math.max(120, Math.min(this.canvas.width - this.draggedComp.width - 120, nx));
+                        ny = Math.max(20, Math.min(this.canvas.height - this.draggedComp.height - 20, ny));
+
+                        this.draggedComp.x = Math.round(nx / cell) * cell;
+                        this.draggedComp.y = Math.round(ny / cell) * cell;
+                        this.draggedComp.updatePinPositions();
+                        e.preventDefault();
+                        return;
+                    }
                 }
-                if (this.selectedPin && this.renderer.drawingWire && e.touches.length === 1) {
-                    const pos = this.getTouchPos(e.touches[0]);
+
+                // Xử lý vẽ dây dở
+                if (this.selectedPin && this.renderer.drawingWire) {
                     this.renderer.drawingWire.currentX = pos.x;
                     this.renderer.drawingWire.currentY = pos.y;
                     e.preventDefault();
@@ -117,6 +164,11 @@ window.SF = window.SF || {};
                     clearTimeout(this.longPressTimer);
                     this.longPressTimer = null;
                 }
+                if (this.isDraggingComp && this.draggedComp) {
+                    SF.soundManager.playClick();
+                }
+                this.draggedComp = null;
+                this.isDraggingComp = false;
             });
         }
 

@@ -123,7 +123,7 @@ window.SF = window.SF || {};
                 }
             });
 
-            // Cho phép click vào linh kiện trên khay để tự thêm vào giữa màn hình
+            // Cho phép click vào linh kiện trên khay để tự thêm vào màn hình (tự động né các trạm đã có)
             this.trayContainer.addEventListener('click', (e) => {
                 const target = e.target.closest('.tray-item');
                 if (target) {
@@ -132,8 +132,23 @@ window.SF = window.SF || {};
                         const comp = SF.createComponent(type);
                         if (comp) {
                             const cell = this.circuit.cellSize || 50;
-                            const cx = Math.round((this.canvas.width / 2 - comp.width / 2) / cell) * cell;
-                            const cy = Math.round((this.canvas.height / 2 - comp.height / 2) / cell) * cell;
+                            let cx = Math.round((this.canvas.width / 2 - comp.width / 2) / cell) * cell;
+                            let cy = Math.round((this.canvas.height / 2 - comp.height / 2) / cell) * cell;
+
+                            // Tự động tìm vị trí trống trên lưới, không bao giờ đặt chồng lên nhau
+                            let attempts = 0;
+                            while (this.circuit.components.some(c => !c.isPort && Math.hypot(c.x - cx, c.y - cy) < 45) && attempts < 25) {
+                                cx += cell * 2;
+                                if (cx > this.canvas.width - comp.width - 130) {
+                                    cx = 140;
+                                    cy += cell * 1.5;
+                                }
+                                if (cy > this.canvas.height - comp.height - 40) {
+                                    cy = 40;
+                                }
+                                attempts++;
+                            }
+
                             comp.x = cx;
                             comp.y = cy;
                             comp.updatePinPositions();
