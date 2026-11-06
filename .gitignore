@@ -1,0 +1,21 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Android build artifacts
+.gradle/
+build/
+android/.gradle/
+android/build/
+android/app/build/
+*.iml
+.idea/
+local.properties
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
+.vscode/

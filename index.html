@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>📦 Signal Factory v2.0 — 3D Cyberpunk Shipper Logic Puzzle</title>
+    <!-- CrazyGames SDK v3 -->
+    <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
+</head>
+<body>
+    <!-- TOP BAR -->
+    <header class="topbar">
+        <div class="topbar-left">
+            <span class="brand-badge">SIGNAL CORP</span>
+            <span class="act-badge" id="actBadge">ACT 1</span>
+            <span class="level-title" id="levelTitle">Level 1: "Straight Line"</span>
+            <button class="btn" id="btnLevels">☰ Levels</button>
+            <button class="btn" id="btnLang" title="Switch Language">🌐 English</button>
+        </div>
+
+        <div class="topbar-center">
+            <div class="challenges-hud">
+                <span class="reputation-hud" id="reputationHud">🔵 0 | 🔴 0 | 🐱 0/10</span>
+                <div class="challenge-item" id="speedGoal">⚡ ≤3 ticks</div>
+                <div class="challenge-item" id="sizeGoal">🔧 ≤1 station</div>
+            </div>
+        </div>
+
+        <div class="topbar-right">
+            <button class="btn btn-3d" id="btnToggle3D" title="Toggle 3D Diorama Mode">🧊 3D Diorama</button>
+
+            <div class="speed-control">
+                <label for="selectSpeed">Speed:</label>
+                <select id="selectSpeed">
+                    <option value="0.25">0.25x (Slow)</option>
+                    <option value="0.5">0.5x (Observe)</option>
+                    <option value="1.0" selected>1.0x (Standard)</option>
+                    <option value="2.0">2.0x (Fast)</option>
+                    <option value="4.0">4.0x (Hyper)</option>
+                </select>
+            </div>
+
+            <button class="btn btn-run" id="btnRun">▶ GO</button>
+            <button class="btn" id="btnStep" title="Advance 1 Clock Tick">⏭ Step</button>
+            <button class="btn" id="btnReset" title="Reset State">↺ Reset</button>
+            <button class="btn" id="btnAudio">🔊 Audio</button>
+        </div>
+    </header>
+
+    <!-- MAIN VIEWPORT -->
+    <main class="game-viewport">
+        <!-- Input Conveyor Queue (IN BELT) -->
+        <aside class="queue-panel input-panel" id="inputQueueStream">
+            <!-- Rendered dynamically by HUD -->
+        </aside>
+
+        <!-- Circuit Board Canvas / Warehouse Floor (2D & 3D) -->
+        <section class="board-container">
+            <canvas id="boardCanvas"></canvas>
+        </section>
+
+        <!-- Output Conveyor Queue (OUT BELT) -->
+        <aside class="queue-panel output-panel" id="outputQueueStream">
+            <!-- Rendered dynamically by HUD -->
+        </aside>
+    </main>
+
+    <!-- BOTTOM DOCK: PROCESSING STATIONS & DISPATCH DIALOGUE -->
+    <footer class="bottom-dock">
+        <!-- Component Drag & Drop Tray -->
+        <div class="tray-wrapper">
+            <div class="tray-label" id="trayLabel">STATIONS:</div>
+            <div class="tray-items" id="componentTray">
+                <!-- Station items rendered dynamically -->
+            </div>
+        </div>
+
+        <!-- Dispatcher Dialogue Bar -->
+        <div class="dialogue-bar" id="dialogueContainer">
+            <!-- DialogueBox UI rendered dynamically -->
+        </div>
+    </footer>
+
+    <!-- MODALS -->
+    <div class="modal-overlay" id="hintModal"></div>
+    <div class="modal-overlay" id="winModal"></div>
+    <div class="modal-overlay" id="cutsceneModal"></div>
+    <div class="modal-overlay" id="choiceModal"></div>
+    <div class="modal-overlay" id="levelSelectModal"></div>
+    <div class="modal-overlay" id="dialogModal"></div>
+
+    <!-- CORE SECURITY & UTILS -->
+    <script src="js/utils/SecureStorage.js"></script>
+
+    <!-- 3RD PARTY LIBRARIES & SDKS -->
+    <script src="js/lib/three.min.js"></script>
+    <script src="js/lib/CrazyGamesSDK.js"></script>
+    <script src="js/monetization/MonetizationManager.js"></script>
+    <script src="js/data/i18n.js"></script>
+
+    <!-- CORE SIMULATION ENGINE -->
+    <script src="js/engine/Box.js"></script>
+    <script src="js/engine/Pin.js"></script>
+    <script src="js/engine/Rail.js"></script>
+    <script src="js/engine/Wire.js"></script>
+    <script src="js/engine/Component.js"></script>
+    <script src="js/components/Stations.js"></script>
+    <script src="js/components/ComponentFactory.js"></script>
+    <script src="js/engine/Circuit.js"></script>
+    <script src="js/engine/Simulator.js"></script>
+    <script src="js/engine/Validator.js"></script>
+
+    <!-- STORY & DATA -->
+    <script src="js/story/StoryManager.js"></script>
+    <script src="js/story/EndingResolver.js"></script>
+    <script src="js/data/choices.js"></script>
+    <script src="js/data/levels.js"></script>
+    <script src="js/story/cutscenes.js"></script>
+    <script src="js/audio/SoundManager.js"></script>
+
+    <!-- UI & SHIPPER ANIMATION -->
+    <script src="js/ui/ModalDialog.js"></script>
+    <script src="js/ui/ShipperAnimator.js"></script>
+    <script src="js/ui/ThreeRenderer.js"></script>
+    <script src="js/ui/BoardRenderer.js"></script>
+    <script src="js/ui/WireDrawer.js"></script>
+    <script src="js/ui/TouchInputHandler.js"></script>
+    <script src="js/ui/DragDrop.js"></script>
+    <script src="js/ui/DialogueBox.js"></script>
+    <script src="js/ui/ChoiceModal.js"></script>
+    <script src="js/ui/HUD.js"></script>
+    <script src="js/ui/ResponsiveLayout.js"></script>
+
+    <!-- ENTRY POINT -->
+    <script src="js/main.js"></script>
+</body>
+</html>

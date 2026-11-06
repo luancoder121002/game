@@ -1,0 +1,172 @@
+================================================================================
+TÀI LIỆU THIẾT KẾ KIẾN TRÚC HỆ THỐNG: LOGIC WIRE & GATE PUZZLE
+(Dòng game giải đố nối dây mạch logic số phong cách Human Resource Machine)
+================================================================================
+
+1. TỔNG QUAN HỆ THỐNG (SYSTEM OVERVIEW)
+--------------------------------------------------------------------------------
+Game vận hành theo mô hình Mô phỏng Xung nhịp Rời rạc (Discrete Clock-Driven 
+Simulation). Người chơi xây dựng một Đồ thị Hướng Không Chu Trình (DAG - Directed 
+Acyclic Graph) hoặc Đồ thị Tuần Hoàn có Trễ (Sequential Graph with Flip-Flop/Register) 
+thông qua thao tác nối dây (Wire Connections) giữa các Chân cắm (Pins) của các Khối 
+Linh kiện (Components / Nodes).
+
+Luồng chạy chính:
+[Input FIFO Stream] 
+       │
+       ▼
+[Input Pins] ──(Wires)──> [Logic Gates / ALU / Mux] ──(Wires)──> [Output Pins]
+                                    ▲                                   │
+                                    └────── [Feedback / Registers] ─────┘
+                                                                        │
+                                                                        ▼
+                                                             [Output Verification]
+
+
+2. CẤU TRÚC DỮ LIỆU CỐT LÕI (CORE DATA STRUCTURES)
+--------------------------------------------------------------------------------
+
+2.1. Dữ liệu Gói tin / Tín hiệu (Packet / Signal Primitive):
+    SignalValue:
+      - rawValue: number | boolean (ví dụ: 1, 0, 15, -4)
+      - type: 'BOOLEAN' | 'INTEGER'
+      - valid: boolean (trạng thái có tín hiệu hay đường truyền rỗng/high-impedance)
+
+2.2. Chân cắm (Pin):
+    Pin:
+      - id: string               // e.g. "gate_1_in_a", "in_port_0"
+      - nodeId: string           // Khối sở hữu
+      - type: 'INPUT' | 'OUTPUT'
+      - signal: SignalValue      // Giá trị tức thời tại chu kỳ clock hiện tại
+      - maxConnections: number   // OUTPUT: không giới hạn; INPUT: thường là 1
+
+2.3. Khối Linh kiện (Node / Component):
+    ComponentNode:
+      - id: string
+      - type: NodeType           // 'AND' | 'OR' | 'NOT' | 'XOR' | 'CMP' | 'MUX' | 'CONST' | 'REG'
+      - inputPins: Pin[]
+      - outputPins: Pin[]
+      - state: any               // Bộ nhớ tạm nếu là Register / Flip-flop
+      - evaluate(): void         // Hàm tính toán logic từ inputPins -> outputPins
+
+2.4. Dây nối (Wire / Edge):
+    Wire:
+      - id: string
+      - fromPinId: string        // Pin OUTPUT
+      - toPinId: string          // Pin INPUT
+      - latency: number          // Độ trễ lan truyền (mặc định 0 hoặc 1 cycle)
+      - visualState: 'IDLE' | 'ACTIVE_HIGH' | 'ACTIVE_LOW'
+
+
+3. TẬP KHỐI LINH KIỆN & BẢNG CHÂN TRỊ (INSTRUCTION & GATE SET)
+--------------------------------------------------------------------------------
+
+3.1. Nhóm Cổng Logic Cơ Bản (Bitwise Logic Gates):
+    - AND Gate:
+        Inputs: A (bool), B (bool)
+        Output: Q = A AND B
+    - OR Gate:
+        Inputs: A (bool), B (bool)
+        Output: Q = A OR B
+    - NOT Gate:
+        Input: A (bool)
+        Output: Q = NOT A
+    - XOR Gate:
+        Inputs: A (bool), B (bool)
+        Output: Q = A XOR B (1 khi A khác B)
+
+3.2. Nhóm Số Học & So Sánh (Arithmetic & Comparator):
+    - CONSTANT (Hằng số):
+        Output: Value cố định (e.g., 0, 1, 10)
+    - COMPARATOR (Bộ So Sánh):
+        Inputs: A (number), B (number)
+        Outputs:
+          - OUT_GT: 1 nếu A > B, ngược lại 0
+          - OUT_EQ: 1 nếu A == B, ngược lại 0
+          - OUT_LT: 1 nếu A < B, ngược lại 0
+    - ALU MATH (Bộ Cộng / Trừ):
+        Inputs: A (number), B (number)
+        Outputs:
+          - SUM: A + B
+          - DIFF: A - B
+
+3.3. Nhóm Điều Khiển Luồng (Routing & Multiplexing):
+    - MUX / GATE SWITCH (Van Chuyển Mạch):
+        Inputs:
+          - DATA_IN: Dữ liệu cần chuyển (số hoặc gói tin)
+          - SELECT: Tín hiệu điều khiển (0 hoặc 1)
+        Outputs:
+          - OUT_0 (khi SELECT = 0 hoặc FALSE)
+          - OUT_1 (khi SELECT = 1 hoặc TRUE)
+
+3.4. Nhóm Trạng Thái / Bộ Nhớ (Sequential Elements):
+    - REGISTER / D-FLIPFLOP:
+        Inputs:
+          - DATA_IN: Giá trị cần ghi
+          - WRITE_ENABLE: Kích hoạt ghi khi = 1
+          - RESET: Đưa giá trị về 0
+        Output:
+          - DATA_OUT: Giữ giá trị đã lưu ở chu kỳ clock trước
+
+
+4. CHU TRÌNH MÔ PHỎNG XUNG NHỊP (SIMULATION CLOCK CYCLE PIPELINE)
+--------------------------------------------------------------------------------
+Tại mỗi tích tắc (Tick/Clock Cycle), hệ thống thực hiện tuần tự 4 pha:
+
+  [Pha 1: FETCH / INPUT STREAM]
+      └── Đọc phần tử tiếp theo từ hàng đợi IN-PORT đưa vào các chân Input của bo mạch.
+
+  [Pha 2: PROPAGATE SIGNALS]
+      └── Truyền dữ liệu từ Output Pin qua các Wires tới các Input Pin đích.
+
+  [Pha 3: COMPUTE GATES (Topological / Relaxation Sort)]
+      └── Duyệt qua toàn bộ các ComponentNode:
+          - Đọc giá trị tại inputPins
+          - Thực thi hàm node.evaluate()
+          - Đưa kết quả vào outputPins
+          (Xử lý giải quyết phụ thuộc tín hiệu từ đầu vào đến đầu ra)
+
+  [Pha 4: COMMIT & VERIFY OUTPUT]
+      └── Đọc giá trị tại OUT-PORT:
+          - So sánh với giá trị kỳ vọng (Expected Output) của bài toán.
+          - Nếu khớp: Chấp nhận gói tin.
+          - Nếu sai: Kích hoạt Fail-state (Báo lỗi kiểm tra, dừng xung nhịp).
+          - Tăng chỉ số CyclesCount += 1.
+
+
+5. KIẾN TRÚC MÀN CHƠI & HỆ THỐNG GỢI Ý (LEVELS & HINT PROGRESSION)
+--------------------------------------------------------------------------------
+
+Mỗi màn chơi được định nghĩa bằng một Schema JSON:
+{
+  "levelId": 1,
+  "title": "Cổng Kiểm Soát Đầu Tiên",
+  "story": "Lọc các gói tin hợp lệ (1) sang cổng OUT, gói lỗi (0) sang DISCARD.",
+  "inputs": [1, 0, 0, 1, 1, 0],
+  "expectedOut": [1, 1, 1],
+  "availableComponents": ["MUX", "WIRE"],
+  "challenges": {
+    "sizeGoal": 2,     // Số linh kiện tối đa
+    "cyclesGoal": 6    // Số chu kỳ tối đa
+  },
+  "hints": [
+    "Dùng Mux (Van chuyển mạch) để bẻ hướng dữ liệu.",
+    "Nối trực tiếp chân IN vào chân SELECT của Mux."
+  ]
+}
+
+Phân cấp độ khó chuẩn HRM:
+  - Cấp 1 (Nhập môn): Làm quen tín hiệu 0 và 1, Van chuyển mạch MUX.
+  - Cấp 2 (Tổ hợp Logic): Kết hợp AND, OR, NOT, XOR giải bài toán kiểm tra chẵn lẻ.
+  - Cấp 3 (Số học & Rẽ nhánh): Comparator + Const so sánh ngưỡng (> 10kg, âm/dương).
+  - Cấp 4 (Trạng thái Tuần hoàn): Dùng Register/Counter đếm số lượng gói, tính tổng dồn.
+  - Cấp 5 (Thuật toán Nâng cao): Tính Checksum, giải mã dữ liệu, lọc trùng lặp.
+
+
+6. HỆ THỐNG ĐÁNH GIÁ TỐI ƯU (SCORING & OPTIMIZATION)
+--------------------------------------------------------------------------------
+Giống như Human Resource Machine, người chơi không chỉ giải được bài mà phải tối ưu:
+  1. Component Badge (Tối ưu số lượng cổng & linh kiện trên bo).
+  2. Wire Badge (Tối ưu số lượng dây nối, tránh mạch spaghetti rối).
+  3. Cycle/Speed Badge (Tối ưu số nhịp xung clock để xử lý toàn bộ luồng dữ liệu).
+================================================================================
