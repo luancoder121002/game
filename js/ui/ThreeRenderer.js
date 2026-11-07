@@ -1488,6 +1488,22 @@ window.SF = window.SF || {};
             return group;
         }
 
+        updateStationLabels() {
+            for (const [group, comp] of this.stationMeshes.entries()) {
+                if (group.userData && group.userData.labelSprite) {
+                    group.remove(group.userData.labelSprite);
+                    ThreeRenderer.disposeObject(group.userData.labelSprite);
+                }
+                const labelColor = comp.isPort ? (comp.type === 'INPUT_PORT' ? '#10b981' : '#f59e0b') : '#38bdf8';
+                const labelText = comp.name || comp.type;
+                const labelSub = comp.isPort ? comp.portName : '';
+                const newSprite = createStationLabelSprite(labelText, labelSub, labelColor);
+                newSprite.position.set(0, 26 / 2 + 28, 0);
+                group.add(newSprite);
+                group.userData.labelSprite = newSprite;
+            }
+        }
+
         getStationColor(type) {
             switch (type) {
                 case 'DUAL_CHECK': case 'AND': return 0x064e3b;

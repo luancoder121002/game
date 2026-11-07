@@ -214,6 +214,14 @@ window.SF = window.SF || {};
             return this.wires.length;
         }
 
+        updateLocalization() {
+            for (const c of this.components) {
+                if (typeof c.updateLocalization === 'function') {
+                    c.updateLocalization();
+                }
+            }
+        }
+
         resetState() {
             for (const c of this.components) {
                 c.resetState();

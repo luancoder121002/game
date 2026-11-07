@@ -23,6 +23,7 @@ window.SF = window.SF || {};
             if (SF.i18n) {
                 SF.i18n.addListener(() => this.updateLocalizedText());
             }
+            this.updateLocalizedText();
         }
 
         setupTopBarEvents() {
@@ -111,6 +112,13 @@ window.SF = window.SF || {};
                 this.dom.btnLang.textContent = SF.i18n.getLanguage() === 'en' ? '🌐 English' : '🌐 Tiếng Việt';
             }
             this.updateViewModeButton();
+
+            // Cập nhật nhãn Tray và Speed
+            const trayLabel = document.getElementById('trayLabel');
+            if (trayLabel) trayLabel.textContent = t('TRAY_LABEL');
+
+            const speedLabel = document.querySelector('.speed-control label');
+            if (speedLabel) speedLabel.textContent = t('SPEED_LABEL');
 
             if (this.currentLevel) {
                 this.setLevel(this.currentLevel);

@@ -99,14 +99,34 @@ window.SF = window.SF || {};
         setLevel(level) {
             this.currentLevel = level;
             const lang = SF.i18n ? SF.i18n.getLanguage() : 'en';
+            const enD = SF.LEVEL_DIALOGUES_EN && SF.LEVEL_DIALOGUES_EN[level.levelId];
 
             let msg = '';
             if (lang === 'en') {
-                msg = level.dialogue?.beforeEN || level.dialogue?.before || level.storyEN || level.story;
+                msg = level.dialogue?.beforeEN || (enD && enD.before) || level.storyEN || level.dialogue?.before || level.story;
             } else {
                 msg = level.dialogue?.before || level.story;
             }
 
+            this.say(msg);
+        }
+
+        showSuccess() {
+            this.setMood('^^');
+            const lang = SF.i18n ? SF.i18n.getLanguage() : 'en';
+            const d = this.currentLevel?.dialogue || {};
+            const enD = SF.LEVEL_DIALOGUES_EN && SF.LEVEL_DIALOGUES_EN[this.currentLevel?.levelId];
+            const msg = (lang === 'en' ? (d.successEN || (enD && enD.success) || "Foreman: 'Excellent! Cargo delivery line fully validated.'") : (d.success || "Foreman: 'Tốt lắm. Đường truyền đã thông suốt.'"));
+            this.say(msg);
+        }
+
+        showFail(reason = '') {
+            this.setMood('>:(');
+            const lang = SF.i18n ? SF.i18n.getLanguage() : 'en';
+            const d = this.currentLevel?.dialogue || {};
+            const enD = SF.LEVEL_DIALOGUES_EN && SF.LEVEL_DIALOGUES_EN[this.currentLevel?.levelId];
+            const defaultFail = lang === 'en' ? "Foreman: 'Cargo check failed. Verify the wiring and retry.'" : "Foreman: 'Tín hiệu chưa đến đích. Hãy kiểm tra lại dây nối.'";
+            const msg = (lang === 'en' ? (d.failEN || (enD && enD.fail) || defaultFail) : (d.fail || defaultFail));
             this.say(msg);
         }
 
@@ -118,15 +138,17 @@ window.SF = window.SF || {};
         }
 
         showHintModal() {
-            if (!this.currentLevel || !this.currentLevel.dialogue) return;
+            if (!this.currentLevel) return;
             const lang = SF.i18n ? SF.i18n.getLanguage() : 'en';
             const t = (k, p) => SF.t ? SF.t(k, p) : k;
+            const d = this.currentLevel.dialogue || {};
+            const enD = SF.LEVEL_DIALOGUES_EN && SF.LEVEL_DIALOGUES_EN[this.currentLevel.levelId];
 
             // Song ngữ gợi ý
             const hints = [
-                (lang === 'en' ? (this.currentLevel.dialogue.hint1EN || "Inspect the truth table of the processing stations.") : this.currentLevel.dialogue.hint1),
-                (lang === 'en' ? (this.currentLevel.dialogue.hint2EN || "Route direct rails from input ports to the correct targets.") : this.currentLevel.dialogue.hint2),
-                (lang === 'en' ? (this.currentLevel.dialogue.hint3EN || "Connect stations according to the logical graph topology.") : this.currentLevel.dialogue.hint3)
+                (lang === 'en' ? (d.hint1EN || (enD && enD.hint1) || "Inspect the truth table of the processing stations.") : d.hint1),
+                (lang === 'en' ? (d.hint2EN || (enD && enD.hint2) || "Route direct rails from input ports to the correct targets.") : d.hint2),
+                (lang === 'en' ? (d.hint3EN || (enD && enD.hint3) || "Connect stations according to the logical graph topology.") : d.hint3)
             ];
 
             if (!this.hintModal) return;

@@ -84,6 +84,15 @@ window.SF = window.SF || {};
                 levelSelectModal: document.getElementById('levelSelectModal')
             }, this.simulator, this.circuit);
 
+            if (SF.i18n) {
+                SF.i18n.addListener(() => {
+                    if (this.circuit) this.circuit.updateLocalization();
+                    if (this.threeRenderer && typeof this.threeRenderer.updateStationLabels === 'function') {
+                        this.threeRenderer.updateStationLabels();
+                    }
+                });
+            }
+
             // Hook chuyển đổi giữa 2D Canvas và 3D WebGL Diorama
             this.hud.onToggle3D = (is3D) => {
                 this.is3D = is3D;
@@ -275,6 +284,7 @@ window.SF = window.SF || {};
             const level = SF.LEVELS[index];
 
             this.circuit.setupLevelPorts(level);
+            this.circuit.updateLocalization();
             this.repositionPorts(level);
 
             this.simulator.loadLevel(level);
